@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Hello World Cloudformation Stack."
+Parameters:
+  Environment:
+    Description: "Name of the environment this stack belongs to."
+    Type: String
+    Default: UAT
+    AllowedValues:
+      - DEV
+      - UAT
+      - PROD
+  MyInstance:
+    Description: "Type of the EC2 instance to be used."
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0dc2d3e4c0f9ebd18
+    us-west-1:
+      AMI: ami-0ed05376b59b90e46
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref MyInstance
+      ImageId: !FindInMap [RegionMap, !Ref AWS::Region,  AMI]
+      Tags:
+        - Key: Name
+          Value: !Join ["-",[!Ref Environment, "loved", "acccount", "service", !Ref AWS::Region]]
+      SecurityGroups:
+        - !Ref LovedSecurityGroup
+  LovedSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+Outputs:
+  ServerDns:
+    Description: "Result EC2 instance DNS name."
+    Value: !GetAtt Ec2Instance.PublicDnsName
+  Env:
+    Description: "Env"
+    Value: !Ref Environment
